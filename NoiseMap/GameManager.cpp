@@ -1,5 +1,6 @@
 #include "GameManager.h"
 #include "Tile.h"
+#include "IslandGen.h"
 
 GameManager::GameManager()
 {
@@ -10,60 +11,27 @@ GameManager::GameManager()
 
 GameManager::~GameManager()
 {
-
+	delete Island;
+	UnloadModel(model);
 }
 
 void GameManager::Run()
 {
 	InitWindow(WindowSize.x, WindowSize.y, WindowName);
 	SetTargetFPS(TargetFPS);
+	int i = 1;
 
-	Image* PerinNoise = new Image{ GenImagePerlinNoise(WindowSize.x, WindowSize.y, 0, 0, 3) };
-	Image* ScreenImage2 = new Image{ GenImageGradientRadial(WindowSize.x, WindowSize.y,0.5, {0,0,0,255},{255,255,255,0})};
-
-	// Texture Data
-
-	Color* colors = LoadImageColors(*PerinNoise);
-	Color* colors2 = LoadImageColors(*ScreenImage2);
-	Tile Top[70];
-
-	for (int i = 0; i < 70; i++)
-	{
-		Top[i].Img = GenImageColor(100, 100, RED);
-	}
-
-	BeginDrawing();
-	ClearBackground(RAYWHITE);
-
-	for (int y = 0; y < WindowSize.y; y ++)
-	{
-		for (int x = 0; x < WindowSize.x; x++)
-		{
-			int index = (y * WindowSize.x) + x;
-
-			Color NoisePixel = colors[index];
-			float aValue = (float)colors2[index].a / 255.0f;
-			 int clr = ((NoisePixel.r + NoisePixel.g + NoisePixel.b) / 3) * aValue;
-
-			Color MapPixel = ReturnBiome(clr);
-
-			ImageDrawPixel(&Top[(x/100) + ((y/100)*7)].Img, x % 100, y % 100, MapPixel);
-		}
-	}
-
-	for (int i = 0; i < 70; i ++)
-	{
-		ImageBlurGaussian(&Top[i].Img, 100);
-		Texture2D texture = LoadTextureFromImage(Top[i].Img);
-		DrawTexture(texture, (i%7)*100, (i / 7) * 100, WHITE);
-	}
-
-	EndDrawing();
+	camera = { 0 };
+	camera.position = { 18.0f, 25.0f, 18.0f };
+	camera.target = { 0.0f, 0.0f, 0.0f };
+	camera.up = { 0.0f, 1.0f, 0.0f };
+	camera.fovy = 45.0f;
+	camera.projection = CAMERA_PERSPECTIVE;                 
 
 	while (!WindowShouldClose())
 	{
-		//Update();
-		//Draw();
+		Update();
+		Draw();
 	}
 
 	CloseWindow();
@@ -71,36 +39,53 @@ void GameManager::Run()
 
 void GameManager::Update()
 {
-	
+	if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+	{
+		int seed = GetRandomValue(0, 255);
+
+		delete Island;
+		Island = new IslandGen();
+
+		Island->Generate(WindowSize.x, WindowSize.y, IslandScale, IslandFrequency, IslandAmplitude, IslandOctaves, seed);
+		FinalRender = Island->FinalTexture2D;
+
+		// 3D Noise-map
+		UnloadMesh(mesh);
+
+		mesh = GenMeshHeightmap(Island->FinalImage3D, { 20, 5, 20 });
+		model = LoadModelFromMesh(mesh);
+		model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = Island->FinalTexture2D;
+
+		UnloadImage(Island->FinalImage3D);
+	}
+
+	if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON))
+	{
+		Mode3D = !Mode3D;
+	}
 }
 
 void GameManager::Draw()
 {
+	if (Mode3D) { UpdateCamera(&camera, CAMERA_ORBITAL); }
+
 	BeginDrawing();
-	ClearBackground(RAYWHITE);;
+	ClearBackground(RAYWHITE);
+
+	if (Mode3D)
+	{
+		BeginMode3D(camera);
+		DrawModel(model, { -10.0f, 0.0f, -10.0f }, 1.0f, WHITE);
+		DrawGrid(22, 1.0f);
+		EndMode3D();
+	}
+	else
+	{
+		if (FinalRender.id != 0)
+		{
+			DrawTexture(FinalRender, 0, 0, WHITE);
+		}
+	}
 
 	EndDrawing();
-}
-
-Color GameManager::ReturnBiome(int clr)
-{
-	unsigned char colour = (int)clr / 51;
-
-	switch (colour)
-	{
-		case 0:
-			return { 39,146,240, 255 };
-		case 1:
-			return { 80,218,254, 255 };
-		case 2:
-			return { 250, 234, 99, 255 };
-		case 3:
-			return { 171, 219, 35, 255 };
-		case 4:
-			return { 34, 139, 34, 255 };
-		case 5:
-			return { 59,59,59, 255 };
-		default:
-			return { 59,59,59, 255 };
-	}
 }
