@@ -1,5 +1,4 @@
 #include "GameManager.h"
-#include "Tile.h"
 #include "IslandGen.h"
 
 GameManager::GameManager()
@@ -19,7 +18,6 @@ void GameManager::Run()
 {
 	InitWindow(WindowSize.x, WindowSize.y, WindowName);
 	SetTargetFPS(TargetFPS);
-	int i = 1;
 
 	camera = { 0 };
 	camera.position = { 18.0f, 25.0f, 18.0f };
@@ -41,12 +39,12 @@ void GameManager::Update()
 {
 	if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
 	{
-		int seed = GetRandomValue(0, 255);
+		unsigned char seed = GetRandomValue(0, 255);
 
 		delete Island;
-		Island = new IslandGen();
+		Island = new IslandGen(SaveImg);
 
-		Island->Generate(WindowSize.x, WindowSize.y, IslandScale, IslandFrequency, IslandAmplitude, IslandOctaves, seed);
+		Island->Generate(GetScreenWidth(), GetScreenHeight(), IslandScale, IslandFrequency, IslandAmplitude, IslandOctaves, seed, Terrain, IslandThreshold);
 		FinalRender = Island->FinalTexture2D;
 
 		// 3D Noise-map
