@@ -102,9 +102,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\s231477\Documents\GitHub\NoiseMap\imgui-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,9 +119,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\s231477\Documents\GitHub\NoiseMap\imgui-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,14 +139,34 @@
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="IslandGen.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Map.cpp" />
+    <ClCompile Include="other\base64.cpp" />
+    <ClCompile Include="other\zlib\adler32.c" />
+    <ClCompile Include="other\zlib\compress.c" />
+    <ClCompile Include="other\zlib\crc32.c" />
+    <ClCompile Include="other\zlib\deflate.c" />
+    <ClCompile Include="other\zlib\gzclose.c" />
+    <ClCompile Include="other\zlib\gzlib.c" />
+    <ClCompile Include="other\zlib\gzread.c" />
+    <ClCompile Include="other\zlib\gzwrite.c" />
+    <ClCompile Include="other\zlib\infback.c" />
+    <ClCompile Include="other\zlib\inffast.c" />
+    <ClCompile Include="other\zlib\inflate.c" />
+    <ClCompile Include="other\zlib\inftrees.c" />
+    <ClCompile Include="other\zlib\trees.c" />
+    <ClCompile Include="other\zlib\uncompr.c" />
+    <ClCompile Include="other\zlib\zutil.c" />
     <ClCompile Include="PelinNoise.cpp" />
     <ClCompile Include="Tile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="IslandGen.h" />
-    <ClInclude Include="Map.h" />
+    <ClInclude Include="other\base64.h" />
+    <ClInclude Include="other\json.hpp" />
+    <ClInclude Include="other\zconf.h" />
+    <ClInclude Include="other\zlib.h" />
+    <ClInclude Include="other\zlib\zconf.h" />
+    <ClInclude Include="other\zlib\zlib.h" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="stb_perlin.h" />
     <ClInclude Include="Tile.h" />

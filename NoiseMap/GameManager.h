@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "IslandGen.h"
+#include <map>
 
 class GameManager
 {
@@ -29,16 +30,18 @@ public:
 	void Draw();
 
 	// Island Generation Params:
-	int Threads = 1;
-	bool SaveImg = false;
+	int Threads = 8;
+	bool SaveImg = true;
 	bool Mode3D = false;
 
 	bool Terrain = false;
 	double IslandDensity = 0.5;
-	double IslandScale = 4;
+	double IslandScale = 3;
 	double IslandFrequency = 2.0;
 	double IslandAmplitude = 0.5;
-	int IslandOctaves = 6;
-	int IslandThreshold = 160;
+	int IslandOctaves = 8;
+	int IslandThreshold = 200;
 	unsigned char Seed = 1;
+
+	std::map<Color, std::string> biomeMap;
 };

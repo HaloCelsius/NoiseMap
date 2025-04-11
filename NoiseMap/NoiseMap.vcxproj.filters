@@ -16,8 +16,53 @@
     <ClCompile Include="IslandGen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Map.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="other\zlib\adler32.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\compress.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\crc32.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\deflate.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\gzclose.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\gzlib.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\gzread.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\gzwrite.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\infback.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\inffast.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\inflate.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\inftrees.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\trees.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\uncompr.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\zlib\zutil.c">
+      <Filter>Other</Filter>
+    </ClCompile>
+    <ClCompile Include="other\base64.cpp">
+      <Filter>Other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -29,6 +74,9 @@
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{bd408f5b-cde2-4134-967e-4a4e89883f32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Other">
+      <UniqueIdentifier>{2c54e2ab-bc2e-4e7b-b158-df9396d963e4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -47,8 +95,15 @@
     <ClInclude Include="stb_perlin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Map.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="other\base64.h" />
+    <ClInclude Include="other\json.hpp" />
+    <ClInclude Include="other\zconf.h" />
+    <ClInclude Include="other\zlib.h" />
+    <ClInclude Include="other\zlib\zconf.h">
+      <Filter>Other</Filter>
+    </ClInclude>
+    <ClInclude Include="other\zlib\zlib.h">
+      <Filter>Other</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
