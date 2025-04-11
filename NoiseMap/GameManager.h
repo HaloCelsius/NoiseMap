@@ -6,13 +6,9 @@ class GameManager
 {
 private:
 	Vector2 WindowSize;
-
 	Image icon = LoadImage("Icon.png");
 	const char* WindowName = "Island Generation";
-	static const int TargetFPS = 60;
-	float fixedDelta;
-
-	bool Mode3D = false;
+	static const int TargetFPS = 240;
 
 	Texture2D FinalRender;
 	IslandGen* Island;
@@ -20,6 +16,9 @@ private:
 	Mesh mesh;
 	Model model;
 	Camera camera;
+
+	const int WindowWidth = 512;
+	const int WindowHeight = 512;
 
 public:
 	GameManager();
@@ -30,7 +29,9 @@ public:
 	void Draw();
 
 	// Island Generation Params:
+	int Threads = 1;
 	bool SaveImg = false;
+	bool Mode3D = false;
 
 	bool Terrain = false;
 	double IslandDensity = 0.5;

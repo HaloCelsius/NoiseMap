@@ -80,7 +80,7 @@ extern "C" {
 extern float stb_perlin_noise3_new(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap);
 extern float stb_perlin_noise3_new_seed(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, int seed);
 extern float stb_perlin_ridge_noise3_new(float x, float y, float z, float lacunarity, float gain, float offset, int octaves);
-extern float stb_perlin_fbm_noise3_new(float x, float y, float z, float lacunarity, float gain, int octaves, unsigned char seed);
+extern float stb_perlin_fbm_noise3_new(float x, float y, float z, float lacunarity, float gain, int octaves, unsigned char seed, int ID);
 extern float stb_perlin_turbulence_noise3_new(float x, float y, float z, float lacunarity, float gain, int octaves);
 extern float stb_perlin_noise3_new_wrap_nonpow2(float x, float y, float z, int x_wrap, int y_wrap, int z_wrap, unsigned char seed);
 #ifdef __cplusplus
@@ -292,7 +292,7 @@ float stb_perlin_ridge_noise3_new(float x, float y, float z, float lacunarity, f
    return sum;
 }
 
-float stb_perlin_fbm_noise3_new(float x, float y, float z, float lacunarity, float gain, int octaves, unsigned char seed)
+float stb_perlin_fbm_noise3_new(float x, float y, float z, float lacunarity, float gain, int octaves, unsigned char seed, int ID)
 {
    int i;
    float frequency = 1.0f;
@@ -300,7 +300,7 @@ float stb_perlin_fbm_noise3_new(float x, float y, float z, float lacunarity, flo
    float sum = 0.0f;
 
    for (i = 0; i < octaves; i++) {
-      sum += stb_perlin_noise3_nternal_new(x*frequency,y*frequency,z*frequency,0,0,0,(unsigned char)seed)*amplitude;
+      sum += stb_perlin_noise3_nternal_new(x*frequency,y *frequency,z*frequency,0,0,0,(unsigned char)seed)*amplitude;
       frequency *= lacunarity;
       amplitude *= gain;
    }

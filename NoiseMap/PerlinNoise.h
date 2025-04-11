@@ -1,9 +1,5 @@
 #pragma once
 #include "raylib.h"
 
-class PerlinNoise
-{
-public:
-	Image GenImagePerlinNoiseNew(int width, int height, int offsetx, int offsety, float frequency, float amplitude, int octaves, float scale, unsigned char seed);
-private:
-};
+void GenFinalImg(int width, int height, int id, Image& FinalImg, Color* Data);
+void GenPerlinNoiseThreaded(int width, int height, float frequency, float amplitude, int octaves, float scale, unsigned char seed, int ID, int threads, Image& Img);

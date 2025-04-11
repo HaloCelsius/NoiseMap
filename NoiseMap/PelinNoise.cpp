@@ -1,45 +1,52 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include <cstdlib>
+#include <iostream>
+
 #include "raylib.h"
 #include "PerlinNoise.h"
 #include "stb_perlin.h"
 
-Image PerlinNoise::GenImagePerlinNoiseNew(int width, int height, int offsetx, int offsety, float frequency, float amplitude, int octaves, float scale, unsigned char seed)
+void GenFinalImg(int width, int height, int id, Image& FinalImg, Color* Data)
 {
-	Color* pixels = (Color*)RL_MALLOC(width * height * sizeof(Color));
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			ImageDrawPixel(&FinalImg, x, y + (height * id), Data[x + y * width]);
+		}
+	}
+}
 
-	float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+void GenPerlinNoiseThreaded(int width, int height, float frequency, float amplitude, int octaves, float scale, unsigned char seed, int ID, int threads, Image& Img)
+{
+	int WidthS = width;
+	int HeightS = height / threads;
 
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)
-        {
-            float nx = (float)(x + offsetx) * (scale / (float)width);
-            float ny = (float)(y + offsety) * (scale / (float)height);
+	Color* Data = (Color*)RL_MALLOC(WidthS * HeightS * sizeof(Color));
 
-            if (width > height) { nx *= aspectRatio; }
-            else { ny /= aspectRatio; }
+	float aspectRatio = static_cast<float>(WidthS) / static_cast<float>(HeightS);
+	std::cout << ID << std::endl;
+	for (int y = 0; y < HeightS; y++)
+	{
+		for (int x = 0; x < WidthS; x++)
+		{
+			float nx = (float)x * (scale / (float)WidthS);
+			float ny = (float)(y) * (scale / (float)HeightS);
 
-            float perlin = stb_perlin_fbm_noise3_new(nx, ny, 1.0f, frequency, amplitude, octaves, seed);
+			if (WidthS > HeightS) { nx *= aspectRatio; }
+			//else { ny /= aspectRatio; }
 
-            if (perlin < -1.0f) perlin = -1.0f;
-            if (perlin > 1.0f) perlin = 1.0f;
+			float perlin = stb_perlin_fbm_noise3_new(nx, ny, 1.0f, frequency, amplitude, octaves, seed, ID+1);
 
-            float newPerlin = (perlin + 1.0f) / 2.0f;
-            unsigned char intesity = (int)(newPerlin * 255.0f);
+			if (perlin < -1.0f) perlin = -1.0f;
+			if (perlin > 1.0f) perlin = 1.0f;
 
-            pixels[y * width + x] = { intesity ,intesity ,intesity ,255 };
-        }
-    }
+			float newPerlin = (perlin + 1.0f) / 2.0f;
+			unsigned char intesity = (int)(newPerlin * 255.0f);
 
-    Image image =
-    {
-        image.data = pixels,
-        image.width = width,
-        image.height = height,
-        image.mipmaps = 1,
-        image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-    };
-
-    return image;
+			Data[((y * WidthS + x))] = { intesity ,intesity ,intesity ,255 };
+		}
+	}
+	GenFinalImg(WidthS, HeightS, ID, Img, Data);
+	UnloadImageColors(Data);
 }

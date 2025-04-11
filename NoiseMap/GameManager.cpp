@@ -3,9 +3,8 @@
 
 GameManager::GameManager()
 {
-	this->WindowSize.x = 700;
-	this->WindowSize.y = 700;
-	fixedDelta = 1.f / TargetFPS;
+	this->WindowSize.x = WindowWidth;
+	this->WindowSize.y = WindowHeight;
 }
 
 GameManager::~GameManager()
@@ -16,15 +15,17 @@ GameManager::~GameManager()
 
 void GameManager::Run()
 {
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(WindowSize.x, WindowSize.y, WindowName);
 	SetTargetFPS(TargetFPS);
-
 	camera = { 0 };
 	camera.position = { 18.0f, 25.0f, 18.0f };
 	camera.target = { 0.0f, 0.0f, 0.0f };
 	camera.up = { 0.0f, 1.0f, 0.0f };
 	camera.fovy = 45.0f;
-	camera.projection = CAMERA_PERSPECTIVE;                 
+	camera.projection = CAMERA_PERSPECTIVE;
+
+	Island = new IslandGen(WindowWidth, WindowHeight);
 
 	while (!WindowShouldClose())
 	{
@@ -41,10 +42,20 @@ void GameManager::Update()
 	{
 		unsigned char seed = GetRandomValue(0, 255);
 
-		delete Island;
-		Island = new IslandGen(SaveImg);
+		Island->Generate
+		(
+			GetScreenWidth(), 
+			GetScreenHeight(), 
+			IslandScale, 
+			IslandFrequency, 
+			IslandAmplitude, 
+			IslandOctaves, 
+			seed, 
+			Terrain, 
+			IslandThreshold,
+			Threads
+		);
 
-		Island->Generate(GetScreenWidth(), GetScreenHeight(), IslandScale, IslandFrequency, IslandAmplitude, IslandOctaves, seed, Terrain, IslandThreshold);
 		FinalRender = Island->FinalTexture2D;
 
 		// 3D Noise-map
@@ -53,8 +64,6 @@ void GameManager::Update()
 		mesh = GenMeshHeightmap(Island->FinalImage3D, { 20, 5, 20 });
 		model = LoadModelFromMesh(mesh);
 		model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = Island->FinalTexture2D;
-
-		UnloadImage(Island->FinalImage3D);
 	}
 
 	if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON))

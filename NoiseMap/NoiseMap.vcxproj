@@ -137,12 +137,14 @@
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="IslandGen.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Map.cpp" />
     <ClCompile Include="PelinNoise.cpp" />
     <ClCompile Include="Tile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="IslandGen.h" />
+    <ClInclude Include="Map.h" />
     <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="stb_perlin.h" />
     <ClInclude Include="Tile.h" />
