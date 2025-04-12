@@ -180,7 +180,7 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
             int index = y * generatedWidth + x;
             Color biomeColor = terrainMapColors[index];
 
-            std::string groundId = "Unknown";
+            std::string groundId = "Unknown"; 
             auto mapIt = biomeToGroundIdMap.find(biomeColor);
             if (mapIt != biomeToGroundIdMap.end()) {
                 groundId = mapIt->second;

@@ -7,7 +7,7 @@ class GameManager
 {
 private:
 	Vector2 WindowSize;
-	Image icon = LoadImage("Icon.png");
+	Image icon;
 	const char* WindowName = "Island Generation";
 	static const int TargetFPS = 240;
 

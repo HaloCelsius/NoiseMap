@@ -104,6 +104,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Icon.png" />
+    <Image Include="assets\Icon.png" />
   </ItemGroup>
 </Project>

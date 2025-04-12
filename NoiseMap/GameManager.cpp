@@ -87,8 +87,11 @@ void GameManager::GenerateIsland()
         Threads
     );
 
+    UnloadImage(icon);
     FinalRender = Island->FinalTexture2D;
+    icon = LoadImageFromTexture(FinalRender);
 
+    SetWindowIcon(icon);
     UnloadMesh(mesh);
     mesh = GenMeshHeightmap(Island->FinalImage3D, { 20, 5, 20 });
     model = LoadModelFromMesh(mesh);
