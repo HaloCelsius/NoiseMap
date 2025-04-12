@@ -138,7 +138,6 @@
   <ItemGroup>
     <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="IslandGen.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="other\base64.cpp" />
     <ClCompile Include="other\zlib\adler32.c" />
     <ClCompile Include="other\zlib\compress.c" />
@@ -172,7 +171,9 @@
     <ClInclude Include="Tile.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Icon.png" />
+    <Image Include="Icon.png">
+      <DeploymentContent>true</DeploymentContent>
+    </Image>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

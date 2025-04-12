@@ -1,35 +1,43 @@
 #include "IslandGen.h"
 #include "PerlinNoise.h"
+#include "stb_perlin.h"
 #include <thread>
 #include <vector>
 #include <fstream>
 #include <stdexcept>
 #include <unordered_map>
-
+#include <random> 
 #include <iostream>
+
 #include "other/zlib/zlib.h"
 #include "other/base64.h"
 #include "other/json.hpp"
+
+bool IslandGen::AreColorsEqual(Color c1, Color c2) {
+    return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b && c1.a == c2.a;
+}
 
 IslandGen::IslandGen(int Width, int Height)
 {
 	RadialGradiant = GenImageGradientRadial(Width, Height, 0.5, { 0,0,0,255 }, { 255,255,255,0 });
 	alpha = LoadImageColors(RadialGradiant);
 
-	biomes_.push_back(new Biome{ { 39,146,240, 255 }, 0.2 }); // Deep Water
-	biomes_.push_back(new Biome{ { 80,218,254, 255 }, 0.4 }); // Shallow Water
-	biomes_.push_back(new Biome{ { 250, 234, 99, 255 }, 0.5 }); // Sand
-	biomes_.push_back(new Biome{ { 171, 219, 35, 255 }, 0.7 }); // Grass
-	biomes_.push_back(new Biome{ { 34, 139, 34, 255 }, 0.9 }); // Forest
-	biomes_.push_back(new Biome{ { 59,59,59, 255 }, 1.0 }); // Rock
+    biomes.push_back(new Biome{ DEEP_WATER_COLOR, 0.2f });
+    biomes.push_back(new Biome{ SHALLOW_WATER_COLOR, 0.35f });
+    biomes.push_back(new Biome{ DARK_SAND_COLOR, 0.4f });
+    biomes.push_back(new Biome{ SAND_COLOR, 0.45f });
+    biomes.push_back(new Biome{ ROAD_COLOR, 0.55f });
+    biomes.push_back(new Biome{ GRASS_COLOR, 0.7f });
+    biomes.push_back(new Biome{ FOREST_COLOR, 0.9f });
+    biomes.push_back(new Biome{ ROCK_COLOR, 1.0f });
 
-	generatedWidth = 0;
-	generatedHeight = 0;
+    generatedWidth = 0;
+    generatedHeight = 0;
 }
 
 IslandGen::~IslandGen()
 {
-	for (auto biome : biomes_)
+	for (auto biome : biomes)
 	{
 		delete biome;
 	}
@@ -81,13 +89,60 @@ void IslandGen::Generate(int Width, int Height, float scale, float frequency, fl
             if (clr > 255) clr = 255;
             if (clr < 0) clr = 0;
 
-            Color BiomeColor = ReturnBiome(clr);
-            terrainMapColors[index] = BiomeColor;
+            Color baseBiomeColor = ReturnBiome(clr);
+            Color finalBiomeColor = baseBiomeColor;
+            if (AreColorsEqual(baseBiomeColor, SAND_COLOR)) {
+                bool nearWater = false;
+                int neighbors[] = { index - 1, index + 1, index - Width, index + Width };
 
-            ImageDrawPixel(&FinalPicture2D, x, y, BiomeColor);
+                for (int neighborIndex : neighbors) {
+                    if (neighborIndex >= 0 && neighborIndex < Width * Height) {
+                        if (clr < (int)(biomes[2]->threshold * 255)) {
+                            nearWater = true;
+                            break;
+                        }
+                    }
+                }
+                if (nearWater) {
+                    finalBiomeColor = DARK_SAND_COLOR;
+                }
+            }
+
+            terrainMapColors[index] = finalBiomeColor;
 
             Color HeightColor = { static_cast<unsigned char>(clr) , static_cast<unsigned char>(clr), static_cast<unsigned char>(clr), 255 };
             ImageDrawPixel(&this->FinalImage3D, x, y, HeightColor);
+        }
+    }
+
+    std::vector<Color> tempTerrainMap = terrainMapColors;
+    for (int y = 1; y < Height - 1; ++y) {
+        for (int x = 1; x < Width - 1; ++x) {
+            int index = y * Width + x;
+            Color currentTileColor = terrainMapColors[index];
+
+            if (AreColorsEqual(currentTileColor, GRASS_COLOR) || AreColorsEqual(currentTileColor, SAND_COLOR)) {
+                bool nearWater = false;
+                int neighbors[] = { index - 1, index + 1, index - Width, index + Width };
+                for (int neighborIndex : neighbors) {
+                    Color neighborColor = terrainMapColors[neighborIndex];
+                    if (AreColorsEqual(neighborColor, SHALLOW_WATER_COLOR) || AreColorsEqual(neighborColor, DEEP_WATER_COLOR)) {
+                        nearWater = true;
+                        break;
+                    }
+                }
+
+                if (nearWater) {
+                    tempTerrainMap[index] = ROAD_COLOR;
+                }
+            }
+        }
+    }
+
+    terrainMapColors = tempTerrainMap; 
+    for (int y = 0; y < Height; y++) {
+        for (int x = 0; x < Width; x++) {
+            ImageDrawPixel(&FinalPicture2D, x, y, terrainMapColors[y * Width + x]);
         }
     }
 
@@ -98,10 +153,10 @@ void IslandGen::Generate(int Width, int Height, float scale, float frequency, fl
     }
 
     UnloadImageColors(PerlinColour);
-    FinalTexture2D = LoadTextureFromImage(FinalPicture2D);
-
-    UnloadImage(FinalPicture2D);
     UnloadImage(PerlinNoise);
+
+    FinalTexture2D = LoadTextureFromImage(FinalPicture2D);
+    UnloadImage(FinalPicture2D);
 }
 
 
@@ -109,21 +164,23 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
 {
     if (generatedWidth == 0 || generatedHeight == 0 || terrainMapColors.empty()) {
         TraceLog(LOG_WARNING, "Island data not generated yet. Cannot export.");
-        throw std::runtime_error("Island data not generated. Call Generate() first.");
         return;
     }
+
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(0, 99);
 
     std::vector<JsonLoc> dictionary;
     std::unordered_map<JsonLoc, short, JsonLoc::Hasher> dictionaryIndexMap;
     std::vector<unsigned char> dataBuffer;
-    dataBuffer.reserve(generatedWidth * generatedHeight * 2); // 2 bytes per tile index
+    dataBuffer.reserve(generatedWidth * generatedHeight * 2); // Estimate 2 bytes per tile index
 
     for (int y = 0; y < generatedHeight; ++y) {
         for (int x = 0; x < generatedWidth; ++x) {
             int index = y * generatedWidth + x;
             Color biomeColor = terrainMapColors[index];
 
-            std::string groundId = "Unknown"; 
+            std::string groundId = "Unknown";
             auto mapIt = biomeToGroundIdMap.find(biomeColor);
             if (mapIt != biomeToGroundIdMap.end()) {
                 groundId = mapIt->second;
@@ -134,10 +191,19 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
 
             JsonLoc currentLoc = { groundId, {}, {} }; 
 
+            if (AreColorsEqual(biomeColor, SAND_COLOR) || AreColorsEqual(biomeColor, DARK_SAND_COLOR)) {
+                if (dist(rng) < 5) { // 5% chance to place a beach towel
+                    currentLoc.objs.push_back({"beachtowel_1"});
+                }
+            }
+
             short dictIndex;
             auto dictIt = dictionaryIndexMap.find(currentLoc);
             if (dictIt == dictionaryIndexMap.end()) {
                 dictIndex = static_cast<short>(dictionary.size());
+                if (dictionary.size() > 32767) {
+                    TraceLog(LOG_ERROR, "Dictionary size exceeds short limit!");
+                }
                 dictionary.push_back(currentLoc);
                 dictionaryIndexMap[currentLoc] = dictIndex;
             }
@@ -146,7 +212,7 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
             }
 
             dataBuffer.push_back(static_cast<unsigned char>((dictIndex >> 8) & 0xFF)); // High byte
-            dataBuffer.push_back(static_cast<unsigned char>(dictIndex & 0xFF));       // Low byte
+            dataBuffer.push_back(static_cast<unsigned char>(dictIndex & 0xFF));        // Low byte
         }
     }
 
@@ -168,14 +234,14 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
     nlohmann::json dict_json = nlohmann::json::array();
     for (const auto& loc : dictionary) {
         nlohmann::json loc_j;
-        loc_j["ground"] = loc.ground.empty() ? nullptr : nlohmann::json(loc.ground); 
+        loc_j["ground"] = loc.ground.empty() ? nullptr : nlohmann::json(loc.ground);
 
         if (!loc.objs.empty()) {
             loc_j["objs"] = nlohmann::json::array();
             for (const auto& obj : loc.objs) {
                 nlohmann::json obj_j;
                 obj_j["id"] = obj.id;
-                if (!obj.name.empty()) obj_j["name"] = obj.name; 
+                if (!obj.name.empty()) obj_j["name"] = obj.name;
                 loc_j["objs"].push_back(obj_j);
             }
         }
@@ -183,7 +249,6 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
             loc_j["objs"] = nullptr;
         }
 
-        // Add regions serialization (not usable yet tho)
         if (!loc.regions.empty()) {
             loc_j["regions"] = nlohmann::json::array();
             for (const auto& reg : loc.regions) {
@@ -196,32 +261,48 @@ void IslandGen::ExportToJson(const std::string& filename, const std::map<Color, 
         else {
             loc_j["regions"] = nullptr;
         }
-
         dict_json.push_back(loc_j);
     }
     j["dict"] = dict_json;
+
     std::ofstream outFile(filename);
     if (!outFile.is_open()) {
         throw std::runtime_error("Failed to open file for writing: " + filename);
     }
-
-    outFile << j.dump(); 
+    outFile << j.dump(4);
     outFile.close();
+    TraceLog(LOG_INFO, "Successfully exported island data to %s", filename.c_str());
 }
 
 Color IslandGen::ReturnBiome(int clr)
 {
-	float normalizedClr = clr / 255.0f;
-	if (normalizedClr > 1.0f) { normalizedClr = 1.0f; }
-	if (normalizedClr < 0.0f) { normalizedClr = 0.0f; }
+    float normalizedClr = clr / 255.0f;
+    if (normalizedClr > 1.0f) { normalizedClr = 1.0f; }
+    if (normalizedClr < 0.0f) { normalizedClr = 0.0f; }
 
-	for (const auto& biome : this->biomes_)
-	{
-		if (normalizedClr <= biome->threshold)
-		{
-			return biome->color;
-		}
-	}
+    for (const auto& biome : this->biomes)
+    {
+        if (AreColorsEqual(biome->color, DARK_SAND_COLOR) || AreColorsEqual(biome->color, ROAD_COLOR)) {
+            continue;
+        }
+
+        if (normalizedClr <= biome->threshold)
+        {
+            return biome->color;
+        }
+    }
+
+    TraceLog(LOG_WARNING, "No biome found for normalized height: %f", normalizedClr);
+    if (!biomes.empty()) {
+        Biome* highestBiome = nullptr;
+        for (int i = biomes.size() - 1; i >= 0; --i) {
+            if (!AreColorsEqual(biomes[i]->color, DARK_SAND_COLOR) && !AreColorsEqual(biomes[i]->color, ROAD_COLOR)) {
+                highestBiome = biomes[i];
+                break;
+            }
+        }
+        if (highestBiome) return highestBiome->color;
+    }
 
     return BLACK;
 }

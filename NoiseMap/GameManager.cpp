@@ -1,32 +1,28 @@
 #include "GameManager.h"
 #include "IslandGen.h"
 #include <map>
+#include <stdexcept>
 
+int main()
+{
+    GameManager* Game = new GameManager();
+    Game->Run();
 
-//std::map<BiomeType, std::string> GameManager::CreateBiomeToServerIdMap() {
-//    std::map<BiomeType, std::string> mapping;
-//    mapping[BiomeType::DEEP_WATER] = "Deep Water"; 
-//    mapping[BiomeType::SHALLOW_WATER] = "Shallow Water";
-//    mapping[BiomeType::SAND] = "Gold Sand"; 
-//    mapping[BiomeType::GRASS] = "Grass";
-//    mapping[BiomeType::FOREST] = "Yellow Grass"; 
-//    mapping[BiomeType::ROCK] = "Rock";
-//    mapping[BiomeType::SNOW] = "Snow"; 
-//    mapping[BiomeType::DESERT] = "Desert Sand"; 
-//    mapping[BiomeType::RIVER] = "Shallow Water"; 
-//    mapping[BiomeType::ROAD] = "Stone Road"; 
-//    return mapping;
-//}
+    delete Game;
+    return 0;
+}
 
 std::map<Color, std::string> CreateBiomeToServerIdMap() {
-	std::map<Color, std::string> mapping;
-	mapping[{ 39, 146, 240, 255 }] = "Dark Water"; 
-	mapping[{ 80, 218, 254, 255 }] = "Shallow Water"; 
-	mapping[{ 250, 234, 99, 255 }] = "Gold Sand"; 
-	mapping[{ 171, 219, 35, 255 }] = "Grass"; 
-	mapping[{ 34, 139, 34, 255 }] = "Yellow Grass"; 
-	mapping[{ 59, 59, 59, 255 }] = "Rock"; 
-	return mapping;
+    std::map<Color, std::string> mapping;
+    mapping[DEEP_WATER_COLOR] = "Dark Water";
+    mapping[SHALLOW_WATER_COLOR] = "Shallow Water";
+    mapping[DARK_SAND_COLOR] = "Dark Sand";
+    mapping[SAND_COLOR] = "Gold Sand";
+    mapping[ROAD_COLOR] = "Stone Road";
+    mapping[GRASS_COLOR] = "Grass";
+    mapping[FOREST_COLOR] = "Yellow Grass";
+    mapping[ROCK_COLOR] = "Rock";
+    return mapping;
 }
 
 GameManager::GameManager()
@@ -34,12 +30,17 @@ GameManager::GameManager()
 	this->WindowSize.x = WindowWidth;
 	this->WindowSize.y = WindowHeight;
 	Island = nullptr;
+    model = { 0 };
+    mesh = { 0 };
+    FinalRender = { 0 };
 }
 
 GameManager::~GameManager()
 {
 	delete Island;
+
 	UnloadModel(model);
+    UnloadTexture(FinalRender);
 }
 
 void GameManager::Run()
@@ -55,8 +56,9 @@ void GameManager::Run()
 	camera.projection = CAMERA_PERSPECTIVE;
 
 	Island = new IslandGen(GetScreenWidth(), GetScreenHeight());
-
 	biomeMap = CreateBiomeToServerIdMap();
+
+    GenerateIsland();
 
 	while (!WindowShouldClose())
 	{
@@ -67,35 +69,41 @@ void GameManager::Run()
 	CloseWindow();
 }
 
+void GameManager::GenerateIsland()
+{
+    unsigned char seed = GetRandomValue(0, 255);
+
+    Island->Generate
+    (
+        GetScreenWidth(),
+        GetScreenHeight(),
+        IslandScale,
+        IslandFrequency,
+        IslandAmplitude,
+        IslandOctaves,
+        seed,
+        Terrain,
+        IslandThreshold,
+        Threads
+    );
+
+    FinalRender = Island->FinalTexture2D;
+
+    UnloadMesh(mesh);
+    mesh = GenMeshHeightmap(Island->FinalImage3D, { 20, 5, 20 });
+    model = LoadModelFromMesh(mesh);
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = Island->FinalTexture2D;
+}
+
+
 void GameManager::Update()
 {
     if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
     {
-        unsigned char seed = GetRandomValue(0, 255);
-
-        Island->Generate
-        (
-            GetScreenWidth(),
-            GetScreenHeight(),
-            IslandScale,
-            IslandFrequency,
-            IslandAmplitude,
-            IslandOctaves,
-            seed,
-            Terrain,
-            IslandThreshold,
-            Threads 
-        );
-
-        FinalRender = Island->FinalTexture2D; 
-
-        UnloadMesh(mesh); 
-        mesh = GenMeshHeightmap(Island->FinalImage3D, { 20, 5, 20 });
-        model = LoadModelFromMesh(mesh); 
-        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = Island->FinalTexture2D;
+        GenerateIsland(); 
     }
 
-    if (IsKeyDown(KEY_SPACE)) {
+    if (IsKeyPressed(KEY_SPACE)) {
         try {
             Island->ExportToJson("generated_island.jm", biomeMap);
             TraceLog(LOG_INFO, "Exported island to generated_island.jm");
@@ -107,10 +115,14 @@ void GameManager::Update()
 
     if (IsMouseButtonReleased(MOUSE_RIGHT_BUTTON))
     {
-        Mode3D = !Mode3D; 
+        Mode3D = !Mode3D;
     }
 
-    if (Mode3D) { UpdateCamera(&camera, CAMERA_ORBITAL); } 
+    if (Mode3D) { UpdateCamera(&camera, CAMERA_ORBITAL); }
+
+    if (IsWindowResized()) {
+        GenerateIsland();
+    }
 }
 
 void GameManager::Draw() 
@@ -126,7 +138,7 @@ void GameManager::Draw()
         EndMode3D();
     }
     else
-    {
+    {   
         if (FinalRender.id != 0) 
         {
             DrawTexturePro(FinalRender,
@@ -135,6 +147,9 @@ void GameManager::Draw()
                 { 0, 0 }, 
                 0.0f, 
                 WHITE);
+        }
+        else {
+            DrawText("Generating Texture...", 10, 40, 20, GRAY);
         }
     }
     DrawFPS(10, 10);

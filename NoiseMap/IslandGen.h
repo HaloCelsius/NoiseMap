@@ -2,21 +2,8 @@
 #include "raylib.h"
 #include <vector>
 #include <string>
+#include <thread>
 #include <map>
-
-enum class BiomeType {
-    DEEP_WATER,
-    SHALLOW_WATER,
-    SAND,
-    GRASS,
-    FOREST,
-    ROCK,
-    SNOW,
-    DESERT,
-    RIVER,
-    ROAD,
-    UNKNOWN
-};
 
 struct JsonObj {
 	std::string id;
@@ -30,6 +17,7 @@ struct JsonObj {
 		return id == other.id && name == other.name;
 	}
 };
+
 struct JsonLoc {
     std::string ground;
     std::vector<JsonObj> objs;
@@ -62,19 +50,38 @@ struct Biome {
     float threshold;
 };
 
-namespace std
-{
-	class thread;
-}
+enum class BiomeType {
+    DEEP_WATER,
+    SHALLOW_WATER,
+    SAND,
+    DARK_SAND,
+    GRASS,
+    FOREST,
+    ROCK,
+    SNOW,
+    DESERT,
+    RIVER,
+    ROAD,
+    UNKNOWN
+};
+
+const Color DEEP_WATER_COLOR = { 39, 146, 240, 255 };
+const Color SHALLOW_WATER_COLOR = { 80, 218, 254, 255 };
+const Color SAND_COLOR = { 250, 234, 99, 255 };
+const Color DARK_SAND_COLOR = { 210, 194, 79, 255 };
+const Color GRASS_COLOR = { 171, 219, 35, 255 };
+const Color FOREST_COLOR = { 34, 139, 34, 255 };
+const Color ROCK_COLOR = { 59, 59, 59, 255 };
+const Color ROAD_COLOR = { 100, 100, 100, 255 };
 
 class IslandGen
 {
-public:	
+public:
     IslandGen(int Width, int Height);
     ~IslandGen();
 
-	Texture2D FinalTexture2D;
-	Image FinalImage3D;
+    Texture2D FinalTexture2D;
+    Image FinalImage3D;
 
     void Generate(int Width, int Height, float scale, float frequency, float amplitude, int octaves, unsigned char seed, bool terain, float islandthresh, int threadcount);
     void ExportToJson(const std::string& filename, const std::map<Color, std::string>& biomeToGroundIdMap);
@@ -84,15 +91,17 @@ private:
     Color* alpha;
 
     std::vector<std::thread> VecThreads;
-    std::vector<Biome*> biomes_;
+    std::vector<Biome*> biomes;
 
-	Color ReturnBiome(int clr);
+    Color ReturnBiome(int clr); 
 
     int generatedWidth = 0;
     int generatedHeight = 0;
     std::vector<Color> terrainMapColors;
 
-	bool SaveImg = false;
+    bool SaveImg = true;
+
+    bool AreColorsEqual(Color c1, Color c2);
 };
 
 inline bool operator<(const Color& lhs, const Color& rhs) {

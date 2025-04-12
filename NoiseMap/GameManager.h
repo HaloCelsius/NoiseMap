@@ -28,8 +28,9 @@ public:
 	void Run();
 	void Update();
 	void Draw();
-
+	void GenerateIsland();
 	// Island Generation Params:
+
 	int Threads = 8;
 	bool SaveImg = true;
 	bool Mode3D = false;
